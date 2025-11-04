@@ -6,6 +6,7 @@ using namespace std;
 
 void Draw();
 void Bezel();
+void BezelMarkers();
 void LineLoopCircle(float centerX, float centerY, float radius, int width, int numSegments);
 void TriangleStripRing(float centerX, float centerY, float innerRadius, float outerRadius, int numSegments);
 void MouseClick(int button, int state, int x, int y);
@@ -51,11 +52,23 @@ void Bezel()
     glColor3f(40.0f / 255.0f, 40.0f / 255.0f, 43.0f / 255.0f);
     TriangleStripRing(0.0f, 0.0f, 0.655f, 0.745f, 50);
 
+    glColor3f(216.0f / 255.0f, 216.0f / 255.0f, 216.0f / 255.0f);
+    BezelMarkers();
+
     // Inner 
     glColor3f(216.0f / 255.0f, 216.0f / 255.0f, 216.0f / 255.0f);
     LineLoopCircle(0, 0, 0.65, 5, 50);
 
     glPopMatrix();
+}
+
+void BezelMarkers()
+{   
+    glBegin(GL_POLYGON);
+        glVertex2f(0.0f, 0.67f);
+        glVertex2f(0.05f, 0.73f);
+        glVertex2f(-0.05f, 0.73f);
+    glEnd();
 }
 
 void TriangleStripRing(float centerX, float centerY, float innerRadius, float outerRadius, int numSegments)
