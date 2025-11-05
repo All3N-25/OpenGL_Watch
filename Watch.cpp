@@ -31,8 +31,8 @@ float bezelRotation = 0.0f;
 float scale = 1.0f;
 bool rotating = false; 
 
-GLuint innerBezelVBO, outerBezelVBO, ringBezelVBO, triangleBezelVBO, lineBezelVBO;          //VBO's for Bezel
-size_t outerBezelSize, ringBezelSize, innerBezelSize, triangleBezelSize, lineBezelSize;          //Vertices Amount
+GLuint innerBezelVBO, outerBezelVBO, ringBezelVBO, triangleBezelVBO, lineBezelVBO, dotBezelVBO;          //VBO's for Bezel
+size_t outerBezelSize, ringBezelSize, innerBezelSize, triangleBezelSize, lineBezelSize, dotBezelSize;          //Vertices Amount
 
 GLuint backgroundBodyVBO, logoBodyVBO;
 size_t backgroundBodySize;
@@ -133,6 +133,17 @@ void initBezelVBO()
     glBufferData(GL_ARRAY_BUFFER, sizeof(lineBezelArray), lineBezelArray, GL_STATIC_DRAW);
     lineBezelSize = sizeof(lineBezelArray) / sizeof(GLfloat);
     
+    //Dotdots
+    GLfloat dotBezelArray[] =
+    {
+        0.0f, 0.68f
+    };
+
+    glGenBuffers(1, &dotBezelVBO);
+    glBindBuffer(GL_ARRAY_BUFFER,dotBezelVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(dotBezelArray), dotBezelArray, GL_STATIC_DRAW);
+    dotBezelSize = sizeof(dotBezelArray) / (2 * sizeof(GLfloat));
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);// Unbind
 }
 
@@ -173,8 +184,21 @@ void Bezel()
 }
 
 void BezelMarkers()
-{       
-    // Add line bars every 25 degrees
+{    
+    // Add dot every 10 deg
+    glPointSize(3.0f);
+    glBindBuffer(GL_ARRAY_BUFFER, dotBezelVBO);
+    glVertexPointer(2, GL_FLOAT, 0, 0);
+
+    for (float angle = 5.0f; angle < 120.0f; angle += 10.0f)
+    {   
+            glPushMatrix();
+            glRotatef(angle, 0.0f, 0.0f, -1.0f);
+            glDrawArrays(GL_POINTS, 0, dotBezelSize);
+            glPopMatrix();
+    }
+
+    // Add line bars every 30 degrees
      for (float angle = 0.0f; angle < 360.0f; angle += 30.0f)
     {   
         glPushMatrix();
