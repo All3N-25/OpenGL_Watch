@@ -230,8 +230,8 @@ void BezelMarkers()
         {
             glPushMatrix();
 
-            glTranslatef(-0.03f, 0.67f, 0.0f); // Adjust position (x, y)
-            glScalef(0.0005f, 0.0005f, 1.0f);  // Adjust scale
+            glTranslatef(-0.03f, 0.67f, 0.0f); 
+            glScalef(0.0005f, 0.0005f, 1.0f);  
             glLineWidth(2.0f);
 
             const unsigned char str10[] = "10";
@@ -244,8 +244,8 @@ void BezelMarkers()
         {
             glPushMatrix();
 
-            glTranslatef(-0.03f, 0.67f, 0.0f); // Adjust position (x, y)
-            glScalef(0.0005f, 0.0005f, 1.0f);  // Adjust scale
+            glTranslatef(-0.03f, 0.67f, 0.0f); 
+            glScalef(0.0005f, 0.0005f, 1.0f);  
             glLineWidth(2.0f);
 
             const unsigned char str10[] = "20";
@@ -258,8 +258,8 @@ void BezelMarkers()
         {
             glPushMatrix();
 
-            glTranslatef(-0.03f, 0.67f, 0.0f); // Adjust position (x, y)
-            glScalef(0.0005f, 0.0005f, 1.0f);  // Adjust scale
+            glTranslatef(-0.03f, 0.67f, 0.0f); 
+            glScalef(0.0005f, 0.0005f, 1.0f);  
             glLineWidth(2.0f);
 
             const unsigned char str10[] = "30";
@@ -272,8 +272,8 @@ void BezelMarkers()
         {
             glPushMatrix();
 
-            glTranslatef(-0.03f, 0.67f, 0.0f); // Adjust position (x, y)
-            glScalef(0.0005f, 0.0005f, 1.0f);  // Adjust scale
+            glTranslatef(-0.03f, 0.67f, 0.0f); 
+            glScalef(0.0005f, 0.0005f, 1.0f);  
             glLineWidth(2.0f);
 
             const unsigned char str10[] = "40";
@@ -286,8 +286,8 @@ void BezelMarkers()
         {
             glPushMatrix();
 
-            glTranslatef(-0.03f, 0.67f, 0.0f); // Adjust position (x, y)
-            glScalef(0.0005f, 0.0005f, 1.0f);  // Adjust scale
+            glTranslatef(-0.03f, 0.67f, 0.0f); 
+            glScalef(0.0005f, 0.0005f, 1.0f);  
             glLineWidth(2.0f);
 
             const unsigned char str10[] = "50";
@@ -668,95 +668,170 @@ void DeleteVBO()
     glDeleteBuffers(1, &secondHandVBO);
 }
 
-void initHandsVBO() 
+void initHandsVBO()
 {
-    // Hour hand
+  
     GLfloat hourHandVerts[] = {
-        -0.03f,  0.0f,   
-        -0.01f,  0.25f, 
-         0.0f,   0.30f, 
-         0.01f,  0.25f,  
-         0.03f,  0.0f   
+        -0.015f, 0.0f,
+         0.015f, 0.0f,
+
+          0.015f, 0.05f,     
+          0.040f, 0.30f,      
+
+           0.0f,   0.34f,
+
+           -0.040f, 0.30f,
+           -0.015f, 0.05f
     };
     glGenBuffers(1, &hourHandVBO);
     glBindBuffer(GL_ARRAY_BUFFER, hourHandVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(hourHandVerts), hourHandVerts, GL_STATIC_DRAW);
-    hourHandSize = 5;
+    hourHandSize = 7; // Number of vertices
 
     // Minute hand
     GLfloat minuteHandVerts[] = {
-        -0.02f,  0.0f,
-        -0.008f, 0.38f,
-         0.0f,   0.45f,
-         0.008f, 0.38f,
-         0.02f,  0.0f
+        -0.008f, 0.0f,
+         0.008f, 0.0f,
+
+          0.008f, 0.03f,     
+          0.020f, 0.50f,      
+
+           0.0f,   0.57f,
+           -0.020f, 0.50f,
+           -0.008f, 0.03f
     };
     glGenBuffers(1, &minuteHandVBO);
     glBindBuffer(GL_ARRAY_BUFFER, minuteHandVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(minuteHandVerts), minuteHandVerts, GL_STATIC_DRAW);
-    minuteHandSize = 5;
+    minuteHandSize = 7; 
 
-  
+
     GLfloat secondHandVerts[] = {
-        -0.005f, -0.08f,  
-        -0.005f,  0.50f,  
-         0.0f,    0.55f, 
-         0.005f,  0.50f,  
-         0.005f, -0.08f,  
-         0.0f,   -0.10f   
+        0.0f, -0.05f, 
+        0.0f, 0.58f,  
+
+        -0.007f, -0.05f, 
+         0.007f, -0.05f,
+         0.007f, -0.20f,
+        -0.007f, -0.20f
     };
     glGenBuffers(1, &secondHandVBO);
     glBindBuffer(GL_ARRAY_BUFFER, secondHandVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(secondHandVerts), secondHandVerts, GL_STATIC_DRAW);
-    secondHandSize = 6;
+    secondHandSize = 6; 
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void ClockHands()
 {
-    tm timeInfo;
-    time_t rawTime;
-    time(&rawTime);
-    localtime_s(&timeInfo, &rawTime);
+    glEnableClientState(GL_VERTEX_ARRAY);
 
-    int hours = timeInfo.tm_hour % 12;
-    int minutes = timeInfo.tm_min;
-    int seconds = timeInfo.tm_sec;
+    time_t now = time(0);
+    struct tm localTime;
+    localtime_s(&localTime, &now);
 
+    int hours = localTime.tm_hour % 12;
+    int minutes = localTime.tm_min;
+    int seconds = localTime.tm_sec;
 
-    float hourAngle = (hours + minutes / 60.0f) * 30.0f; 
+    float hourAngle = (hours + minutes / 60.0f) * 30.0f;
     float minuteAngle = (minutes + seconds / 60.0f) * 6.0f;
     float secondAngle = seconds * 6.0f;
 
-    glEnableClientState(GL_VERTEX_ARRAY);
 
-    // Hour Hand
+    GLfloat lumeColor[] = { 250.0f / 255.0f, 245.0f / 255.0f, 239.0f / 255.0f };
+    GLfloat metallicColor[] = { 158.0f / 255.0f, 168.0f / 255.0f, 174.0f / 255.0f };
+    GLfloat secondHandColor[] = { 200.0f / 255.0f, 20.0f / 255.0f, 20.0f / 255.0f };
+    GLfloat centerPinColor[] = { 70.0f / 255.0f, 70.0f / 255.0f, 70.0f / 255.0f };
+
+    //Hour Hand
     glPushMatrix();
-    glRotatef(-hourAngle, 0.0f, 0.0f, 1.0f);
+    glRotatef(-hourAngle, 0.0f, 0.0f, 1.0f); 
     glBindBuffer(GL_ARRAY_BUFFER, hourHandVBO);
     glVertexPointer(2, GL_FLOAT, 0, 0);
-    glColor3f(0.8f, 0.8f, 0.8f);
+
+
+    glColor3fv(lumeColor);
     glDrawArrays(GL_POLYGON, 0, hourHandSize);
+
+
+    glColor3fv(metallicColor);
+    glLineWidth(2.5f);
+    glDrawArrays(GL_LINE_LOOP, 0, hourHandSize);
+
+ 
+    glColor3fv(lumeColor); 
+    glLineWidth(1.5f);     
+    glBegin(GL_LINES);
+    glVertex2f(0.0f, 0.0f);   
+    glVertex2f(0.0f, 0.05f);  
+    glEnd();
+
     glPopMatrix();
 
-    // Minute Hand
+
     glPushMatrix();
-    glRotatef(-minuteAngle, 0.0f, 0.0f, 1.0f);
+    glRotatef(-minuteAngle, 0.0f, 0.0f, 1.0f); 
     glBindBuffer(GL_ARRAY_BUFFER, minuteHandVBO);
     glVertexPointer(2, GL_FLOAT, 0, 0);
-    glColor3f(0.9f, 0.9f, 0.9f);
+
+ 
+    glColor3fv(lumeColor);
     glDrawArrays(GL_POLYGON, 0, minuteHandSize);
+
+    glColor3fv(metallicColor);
+    glLineWidth(2.0f);
+    glDrawArrays(GL_LINE_LOOP, 0, minuteHandSize);
+
+   
+    glColor3fv(lumeColor); 
+    glLineWidth(1.0f);    
+    glBegin(GL_LINES);
+    glVertex2f(0.0f, 0.0f);   
+    glVertex2f(0.0f, 0.03f); 
+    glEnd();
+
     glPopMatrix();
 
-    // Second Hand
+  
     glPushMatrix();
-    glRotatef(-secondAngle, 0.0f, 0.0f, 1.0f);
+    glRotatef(-secondAngle, 0.0f, 0.0f, 1.0f); 
     glBindBuffer(GL_ARRAY_BUFFER, secondHandVBO);
     glVertexPointer(2, GL_FLOAT, 0, 0);
-    glColor3f(1.0f, 0.0f, 0.0f);
-    glDrawArrays(GL_POLYGON, 0, secondHandSize);
+
+  
+    glColor3fv(secondHandColor);
+    glLineWidth(2.0f);
+    glDrawArrays(GL_LINES, 0, 2);
+
+    
+    glColor3fv(secondHandColor);
+    glDrawArrays(GL_POLYGON, 2, 4); 
+
+  
+    glColor3fv(lumeColor);
+    glPointSize(7.0f); 
+    glBegin(GL_POINTS);
+    glVertex2f(0.0f, -0.1f); 
+    glEnd();
+
+  
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glBegin(GL_POLYGON);
+    glVertex2f(-0.015f, -0.02f);
+    glVertex2f(0.015f, -0.02f);
+    glVertex2f(0.015f, 0.02f);
+    glVertex2f(-0.015f, 0.02f);
+    glEnd();
+
     glPopMatrix();
+
+    glColor3fv(centerPinColor);
+    glPointSize(10.0f); 
+    glBegin(GL_POINTS);
+    glVertex2f(0.0f, 0.0f);
+    glEnd();
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -765,5 +840,6 @@ void ClockHands()
 void UpdateClock(int value)
 {
     glutPostRedisplay();
-    glutTimerFunc(1000, UpdateClock, 0); 
+    glutTimerFunc(1000, UpdateClock, 0);
 }
+
