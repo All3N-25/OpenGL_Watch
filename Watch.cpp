@@ -1,7 +1,11 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
+#define _USE_MATH_DEFINES //for Visual Studio to work with M_PI
 #include <cmath>
 #include <vector>
+#include <time.h>
+#include <stdio.h>
+
 
 using namespace std;
 
@@ -10,6 +14,8 @@ void Bezel();
 void BezelMarkers();
 void Body();
 void BodyMarkers();
+void ClockHands();
+void UpdateClock(int);
 
 //For VBO
 void initBezelVBO();
@@ -29,8 +35,9 @@ void keyboardMonitor(unsigned char key, int x, int y);
 //Global Variables
 float bezelRotation = 0.0f;
 float scale = 1.0f;
-bool rotating = false; 
+bool rotating = false;
 int numSegments = 100;
+const int ROTATE_DEGREES = 180;
 
 GLuint innerBezelVBO, outerBezelVBO, ringBezelVBO, triangleBezelVBO, lineBezelVBO, dotBezelVBO;          //VBO's for Bezel
 size_t outerBezelSize, ringBezelSize, innerBezelSize, triangleBezelSize, lineBezelSize, dotBezelSize;          //Vertices Amount
@@ -55,12 +62,13 @@ int main(int argc, char** argv)
 
     GLenum err = glewInit();
     if (err == GLEW_OK)
-    {   
+    {
         initBezelVBO();
         initBodyVBO();
+        glutTimerFunc(1000, UpdateClock, 0);
         glutMainLoop();
     }
-    
+
     DeleteVBO();
 
     return 0;
@@ -69,11 +77,11 @@ int main(int argc, char** argv)
 // Drawers
 
 void Draw()
-{   
+{
     glClear(GL_COLOR_BUFFER_BIT);
-
     Bezel();
     Body();
+    ClockHands();
 
     glutSwapBuffers();
 }
@@ -106,13 +114,13 @@ void initBezelVBO()
     innerBezelSize = innerBezelVertices.size() / 2;
 
     //Trianlge
-    GLfloat triangleBezelArray[] = 
+    GLfloat triangleBezelArray[] =
     {
         0.0f, 0.67f,
         0.05f, 0.73f,
         -0.05f, 0.73f
     };
-    
+
     glGenBuffers(1, &triangleBezelVBO);
     glBindBuffer(GL_ARRAY_BUFFER, triangleBezelVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(triangleBezelArray), triangleBezelArray, GL_STATIC_DRAW);
@@ -131,7 +139,7 @@ void initBezelVBO()
     glBindBuffer(GL_ARRAY_BUFFER, lineBezelVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(lineBezelArray), lineBezelArray, GL_STATIC_DRAW);
     lineBezelSize = sizeof(lineBezelArray) / sizeof(GLfloat);
-    
+
     //Dotdots
     GLfloat dotBezelArray[] =
     {
@@ -139,7 +147,7 @@ void initBezelVBO()
     };
 
     glGenBuffers(1, &dotBezelVBO);
-    glBindBuffer(GL_ARRAY_BUFFER,dotBezelVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, dotBezelVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(dotBezelArray), dotBezelArray, GL_STATIC_DRAW);
     dotBezelSize = sizeof(dotBezelArray) / (2 * sizeof(GLfloat));
 
@@ -147,7 +155,7 @@ void initBezelVBO()
 }
 
 void Bezel()
-{   
+{
     glPushMatrix();
     glRotatef(bezelRotation, 0.0f, 0.0f, -1.0f);
 
@@ -155,24 +163,24 @@ void Bezel()
 
     // Outer 
     glBindBuffer(GL_ARRAY_BUFFER, outerBezelVBO);
-    glVertexPointer(2, GL_FLOAT, 0, 0); 
+    glVertexPointer(2, GL_FLOAT, 0, 0);
     glColor3f(216.0f / 255.0f, 216.0f / 255.0f, 216.0f / 255.0f);
     glLineWidth(5.0f);
     glDrawArrays(GL_LINE_LOOP, 0, outerBezelSize);
 
     // Ring
     glBindBuffer(GL_ARRAY_BUFFER, ringBezelVBO);
-    glVertexPointer(2, GL_FLOAT, 0, 0); 
+    glVertexPointer(2, GL_FLOAT, 0, 0);
     glColor3f(30.0f / 255.0f, 30.0f / 255.0f, 33.0f / 255.0f);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, ringBezelSize); 
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, ringBezelSize);
 
     glColor3f(216.0f / 255.0f, 216.0f / 255.0f, 216.0f / 255.0f);
     BezelMarkers();
 
     // Inner 
     glBindBuffer(GL_ARRAY_BUFFER, innerBezelVBO);
-    glVertexPointer(2, GL_FLOAT, 0, 0); 
-    glColor4f(216.0f / 255.0f, 216.0f / 255.0f, 216.0f / 255.0f, 0.5f); 
+    glVertexPointer(2, GL_FLOAT, 0, 0);
+    glColor4f(216.0f / 255.0f, 216.0f / 255.0f, 216.0f / 255.0f, 0.5f);
     glLineWidth(5.0f);
     glDrawArrays(GL_LINE_LOOP, 0, innerBezelSize);
 
@@ -183,36 +191,36 @@ void Bezel()
 }
 
 void BezelMarkers()
-{    
+{
     // Add dot every 10 deg
     glPointSize(3.0f);
     glBindBuffer(GL_ARRAY_BUFFER, dotBezelVBO);
     glVertexPointer(2, GL_FLOAT, 0, 0);
 
     for (float angle = 5.0f; angle < 120.0f; angle += 10.0f)
-    {   
-            glPushMatrix();
-            glRotatef(angle, 0.0f, 0.0f, -1.0f);
-            glDrawArrays(GL_POINTS, 0, dotBezelSize);
-            glPopMatrix();
+    {
+        glPushMatrix();
+        glRotatef(angle, 0.0f, 0.0f, -1.0f);
+        glDrawArrays(GL_POINTS, 0, dotBezelSize);
+        glPopMatrix();
     }
 
     // Add line bars every 30 degrees
-     for (float angle = 0.0f; angle < 360.0f; angle += 30.0f)
-    {   
+    for (float angle = 0.0f; angle < 360.0f; angle += 30.0f)
+    {
         glPushMatrix();
 
         glRotatef(angle, 0.0f, 0.0f, -1.0f);
 
         if (angle == 0.0f)
-        {   
+        {
             //Upside Down Triangle
             glBindBuffer(GL_ARRAY_BUFFER, triangleBezelVBO);
             glVertexPointer(2, GL_FLOAT, 0, 0);
             glDrawArrays(GL_POLYGON, 0, triangleBezelSize);
         }
         else if (angle == 60.0f)
-        {       
+        {
             glPushMatrix();
 
             glTranslatef(-0.03f, 0.67f, 0.0f); // Adjust position (x, y)
@@ -226,7 +234,7 @@ void BezelMarkers()
             glPopMatrix();
         }
         else if (angle == 120.0f)
-        {   
+        {
             glPushMatrix();
 
             glTranslatef(-0.03f, 0.67f, 0.0f); // Adjust position (x, y)
@@ -237,10 +245,10 @@ void BezelMarkers()
             for (const char* p = (const char*)str10; *p; p++)
                 glutStrokeCharacter(GLUT_STROKE_ROMAN, *p);
 
-            glPopMatrix(); 
+            glPopMatrix();
         }
         else if (angle == 180.0f)
-        {   
+        {
             glPushMatrix();
 
             glTranslatef(-0.03f, 0.67f, 0.0f); // Adjust position (x, y)
@@ -254,7 +262,7 @@ void BezelMarkers()
             glPopMatrix();
         }
         else if (angle == 240.0f)
-        {   
+        {
             glPushMatrix();
 
             glTranslatef(-0.03f, 0.67f, 0.0f); // Adjust position (x, y)
@@ -268,7 +276,7 @@ void BezelMarkers()
             glPopMatrix();
         }
         else if (angle == 300.0f)
-        {   
+        {
             glPushMatrix();
 
             glTranslatef(-0.03f, 0.67f, 0.0f); // Adjust position (x, y)
@@ -311,14 +319,14 @@ void initBodyVBO()
         -0.075f, 0.23f,
         -0.065f, 0.165f,
         0.0f, 0.14f,
-        0.065f, 0.165f, 
+        0.065f, 0.165f,
         0.075f, 0.23f,
 
         //5
         0.037f, 0.215f,
         -0.033f, 0.215f,
         -0.038f, 0.195f,
-        0.033f, 0.195f, 
+        0.033f, 0.195f,
         0.033f, 0.168f,
         -0.038f, 0.168f
     };
@@ -360,7 +368,7 @@ void initBodyVBO()
     glBufferData(GL_ARRAY_BUFFER, sizeof(triangleBodyArray), triangleBodyArray, GL_STATIC_DRAW);
 
     //Rectangle
-    GLfloat RectangleArray[] = 
+    GLfloat RectangleArray[] =
     {
         0.55, 0.035,
         0.55, -0.035,
@@ -376,7 +384,7 @@ void initBodyVBO()
 }
 
 void Body()
-{   
+{
     glEnableClientState(GL_VERTEX_ARRAY);
 
     //Background
@@ -389,12 +397,12 @@ void Body()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     //Brand Name
-    const unsigned char brand[100] = {"SEIKO"};
+    const unsigned char brand[100] = { "SEIKO" };
     glColor3f(216.0f / 255.0f, 216.0f / 255.0f, 216.0f / 255.0f);
     glRasterPos2f(-0.085f, 0.25f);
     glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, brand);
 
-    const unsigned char mode[100] = {"AUTOMATIC"};
+    const unsigned char mode[100] = { "AUTOMATIC" };
     glColor3f(216.0f / 255.0f, 216.0f / 255.0f, 216.0f / 255.0f);
     glRasterPos2f(-0.095f, -0.25f);
     glutBitmapString(GLUT_BITMAP_HELVETICA_12, mode);
@@ -403,25 +411,25 @@ void Body()
 
     //Logo
     glPushMatrix();
-        // Move center to origin
-        glTranslatef(0.0f, 0.18f, 0.0f);
-        // Scale
-        glScalef(scale, scale, 1.0f);
+    // Move center to origin
+    glTranslatef(0.0f, 0.18f, 0.0f);
+    // Scale
+    glScalef(scale, scale, 1.0f);
 
-        // Move back to original position
-        glTranslatef(0.0f, -0.18f, 0.0f);
+    // Move back to original position
+    glTranslatef(0.0f, -0.18f, 0.0f);
 
-        //Container
-        glLineWidth(2.5);
-        glBindBuffer(GL_ARRAY_BUFFER, logoBodyVBO);
-        glVertexPointer(2, GL_FLOAT, 0, 0);
-        glDrawArrays(GL_LINE_LOOP, 0, 6);
+    //Container
+    glLineWidth(2.5);
+    glBindBuffer(GL_ARRAY_BUFFER, logoBodyVBO);
+    glVertexPointer(2, GL_FLOAT, 0, 0);
+    glDrawArrays(GL_LINE_LOOP, 0, 6);
 
-        //5
-        glDrawArrays(GL_LINE_STRIP, 6, 2);
-        glDrawArrays(GL_LINE_STRIP, 7, 3);
-        glDrawArrays(GL_LINE_STRIP, 9, 3); 
-        
+    //5
+    glDrawArrays(GL_LINE_STRIP, 6, 2);
+    glDrawArrays(GL_LINE_STRIP, 7, 3);
+    glDrawArrays(GL_LINE_STRIP, 9, 3);
+
     glPopMatrix();
 
     BodyMarkers();
@@ -430,13 +438,13 @@ void Body()
 }
 
 void BodyMarkers()
-{    
+{
     //Lines
     glBindBuffer(GL_ARRAY_BUFFER, lineBodyVBO);
     glVertexPointer(2, GL_FLOAT, 0, 0);
 
     for (float angle = 0.0f; angle < 360.0f; angle += 6.0f)
-    {       
+    {
         if (fmod(angle, 30) == 0)
             glLineWidth(6);
         else
@@ -450,16 +458,16 @@ void BodyMarkers()
     //Triangle
     glBindBuffer(GL_ARRAY_BUFFER, triangleBodyVBO);
     glVertexPointer(2, GL_FLOAT, 0, 0);
-    glColor3f(250.0f/255.0f, 245.0f/255.0f, 239.0f/255.0f);
+    glColor3f(250.0f / 255.0f, 245.0f / 255.0f, 239.0f / 255.0f);
     glDrawArrays(GL_POLYGON, 0, 3);
 
     //Triangle Outline
     glLineWidth(3.0f);
-    glColor3f(158.0f / 255.0f, 168.0f/255.0f, 174.0f/255.0f);
+    glColor3f(158.0f / 255.0f, 168.0f / 255.0f, 174.0f / 255.0f);
     glDrawArrays(GL_LINE_LOOP, 0, 5);
     //Circles
     for (float angle = 30.0f; angle < 360.0f; angle += 30.0f)
-    {   
+    {
         glPushMatrix();
         glRotatef(angle, 0.0f, 0.0f, -1.0f);
         if (angle == 90)
@@ -467,56 +475,56 @@ void BodyMarkers()
             glPopMatrix();
             continue;
         }
-        else if( angle == 180 || angle == 270)
+        else if (angle == 180 || angle == 270)
         {
             glPushMatrix();
-            
+
             glTranslatef(0.0f, 0.55f + 0.025f, 0.0f);
             glScalef(1.0f, 1.8f, 1.0f);
             glTranslatef(0.0f, -(0.55f + 0.025f), 0.0f);
 
-            glColor3f(250.0f/255.0f, 245.0f/255.0f, 239.0f/255.0f);
+            glColor3f(250.0f / 255.0f, 245.0f / 255.0f, 239.0f / 255.0f);
             glDrawArrays(GL_POLYGON, 0, circleBodySize);
 
             glLineWidth(3.0f);
-            glColor3f(158.0f/255.0f, 168.0f/255.0f, 174.0f/255.0f);
+            glColor3f(158.0f / 255.0f, 168.0f / 255.0f, 174.0f / 255.0f);
             glDrawArrays(GL_LINE_LOOP, 0, circleBodySize);
 
             glLineWidth(3.0f);
-            glColor3f(158.0f/255.0f, 168.0f/255.0f, 174.0f/255.0f);
+            glColor3f(158.0f / 255.0f, 168.0f / 255.0f, 174.0f / 255.0f);
             glBegin(GL_LINES);
-            glVertex2f(0.0f, (0.55f + 0.025f) - 0.055); 
+            glVertex2f(0.0f, (0.55f + 0.025f) - 0.055);
             glVertex2f(0.0f, (0.55f + 0.025f) - (0.045f * 2));
             glEnd();
 
             glPopMatrix();
         }
         else
-        {   
+        {
             glBindBuffer(GL_ARRAY_BUFFER, circleBodyVBO);
             glVertexPointer(2, GL_FLOAT, 0, 0);
-            glColor3f(250.0f/255.0f, 245.0f/255.0f, 239.0f/255.0f);
+            glColor3f(250.0f / 255.0f, 245.0f / 255.0f, 239.0f / 255.0f);
             glDrawArrays(GL_POLYGON, 0, circleBodySize);
 
             //OUTLINE
             glLineWidth(3.0f);
-            glColor3f(158.0f / 255.0f, 168.0f/255.0f, 174.0f/255.0f);
+            glColor3f(158.0f / 255.0f, 168.0f / 255.0f, 174.0f / 255.0f);
             glDrawArrays(GL_LINE_LOOP, 0, circleBodySize);
         }
         glPopMatrix();
-    }    
+    }
 
     // DATE / GROUP NUMBER
     glBindBuffer(GL_ARRAY_BUFFER, RectangleBodyVBO);
     glVertexPointer(2, GL_FLOAT, 0, 0);
-    glColor3f(250.0f/255.0f, 245.0f/255.0f, 239.0f/255.0f);
+    glColor3f(250.0f / 255.0f, 245.0f / 255.0f, 239.0f / 255.0f);
     glDrawArrays(GL_POLYGON, 0, 4);
-    
+
     glLineWidth(2.0f);
-    glColor3f(158.0f / 255.0f, 168.0f/255.0f, 174.0f/255.0f);
+    glColor3f(158.0f / 255.0f, 168.0f / 255.0f, 174.0f / 255.0f);
     glDrawArrays(GL_LINE_LOOP, 0, 4);
 
-    const unsigned char mode[100] = {"GROUP 2"};
+    const unsigned char mode[100] = { "GROUP 2" };
     glColor3f(40.0f / 255.0f, 40.0f / 255.0f, 43.0f / 255.0f);
     glRasterPos2f(0.335, -0.020f);
     glutBitmapString(GLUT_BITMAP_HELVETICA_18, mode);
@@ -526,9 +534,9 @@ void BodyMarkers()
 
 void GenerateCirlceVertices(float centerX, float centerY, float radius, int numSegments, std::vector<GLfloat>& vertices)
 {
-    for (int i = 0; i < numSegments; ++i) 
+    for (int i = 0; i < numSegments; ++i)
     {
-        float angle = 2.0f * M_PI * i / numSegments; 
+        float angle = 2.0f * M_PI * i / numSegments;
         vertices.push_back(centerX + radius * cos(angle)); // X coordinate
         vertices.push_back(centerY + radius * sin(angle)); // Y coordinate
     }
@@ -557,10 +565,10 @@ void CircleGen(float centerX, float centerY, float radius, int width, int numSeg
 {
     for (int i = 0; i < numSegments; ++i)
     {
-        float angle = 2.0f * M_PI * i / numSegments; 
+        float angle = 2.0f * M_PI * i / numSegments;
         float x = centerX + radius * cos(angle);
         float y = centerY + radius * sin(angle);
-        
+
         vertices.push_back(x);
         vertices.push_back(y);
     }
@@ -588,7 +596,7 @@ void MouseClick(int button, int state, int x, int y)
         if (state == GLUT_DOWN)
         {
             rotating = true;
-            glutIdleFunc(RotateBezel); 
+            glutIdleFunc(RotateBezel);
         }
         else if (state == GLUT_UP)
         {
@@ -602,7 +610,7 @@ void MouseClick(int button, int state, int x, int y)
         if (bezelRotation >= 360.0f)
             bezelRotation -= 360.0f;
         glutPostRedisplay();
-        }
+    }
     else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
     {
         bezelRotation = 0.0f;
@@ -613,18 +621,18 @@ void MouseClick(int button, int state, int x, int y)
 
 void mouseWheel(int wheel, int direction, int x, int y)
 {
-    if(direction > 0) 
-        scale += 0.05f; 
-    else 
+    if (direction > 0)
+        scale += 0.05f;
+    else
         scale -= 0.05f;
 
-    if(scale < 0.1f) 
+    if (scale < 0.1f)
         scale = 0.1f;
     glutPostRedisplay();
 }
 
 void keyboardMonitor(unsigned char key, int x, int y)
-{   
+{
     if (key == 27)
     {
         DeleteVBO();
@@ -650,4 +658,59 @@ void DeleteVBO()
     glDeleteBuffers(1, &triangleBodyVBO);
     //HANDS
 
+}
+
+
+void ClockHands() {
+    glPushMatrix();
+    glRotatef(ROTATE_DEGREES, 0, 0, 1);
+
+    time_t rawtime;
+    struct tm timeinfo;
+    time(&rawtime);
+
+#if defined(_MSC_VER)
+    localtime_s(&timeinfo, &rawtime);
+#else
+    localtime_r(&rawtime, &timeinfo);
+#endif
+
+    int hours = timeinfo.tm_hour % 12;
+    int minutes = timeinfo.tm_min;
+    int seconds = timeinfo.tm_sec;
+
+    // Hour hand
+    double hourAngle = -(90.0 + hours * 360.0 / 12.0) + (360.0 / 12.0) * minutes / 60.0;
+    glLineWidth(5.0f);
+    glBegin(GL_LINES);
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glVertex2d(0.0, 0.0);
+    glVertex2d(0.5 * cos(hourAngle * M_PI / 180.0), 0.5 * sin(hourAngle * M_PI / 180.0));
+    glEnd();
+
+    // Minute hand
+    double minuteAngle = -(90.0 + minutes * 360.0 / 60.0);
+    glLineWidth(3.0f);
+    glBegin(GL_LINES);
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glVertex2d(0.0, 0.0);
+    glVertex2d(0.7 * cos(minuteAngle * M_PI / 180.0), 0.7 * sin(minuteAngle * M_PI / 180.0));
+    glEnd();
+
+    // Second hand
+    double secondAngle = -(90.0 + seconds * 360.0 / 60.0);
+    glLineWidth(1.0f);
+    glBegin(GL_LINES);
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glVertex2d(0.0, 0.0);
+    glVertex2d(0.9 * cos(secondAngle * M_PI / 180.0), 0.9 * sin(secondAngle * M_PI / 180.0));
+    glEnd();
+
+    glPopMatrix();
+}
+
+
+void UpdateClock(int) {
+    glutPostRedisplay();          // ask GLUT to redraw the screen
+    glutTimerFunc(1000, UpdateClock, 0); // call again in 1000 ms (1 second)
 }
