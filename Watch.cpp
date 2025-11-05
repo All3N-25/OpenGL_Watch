@@ -20,6 +20,7 @@ void UpdateClock(int);
 //For VBO
 void initBezelVBO();
 void initBodyVBO();
+void initHandsVBO();
 void DeleteVBO();
 
 //Generators
@@ -37,13 +38,19 @@ float bezelRotation = 0.0f;
 float scale = 1.0f;
 bool rotating = false;
 int numSegments = 100;
-const int ROTATE_DEGREES = 180;
+const int ROTATE_DEGREES = 0;
 
 GLuint innerBezelVBO, outerBezelVBO, ringBezelVBO, triangleBezelVBO, lineBezelVBO, dotBezelVBO;          //VBO's for Bezel
 size_t outerBezelSize, ringBezelSize, innerBezelSize, triangleBezelSize, lineBezelSize, dotBezelSize;          //Vertices Amount
 
 GLuint backgroundBodyVBO, logoBodyVBO, lineBodyVBO, circleBodyVBO, RectangleBodyVBO, triangleBodyVBO;
 size_t backgroundBodySize, circleBodySize;
+
+GLuint hourHandVBO, minuteHandVBO, secondHandVBO;
+size_t hourHandSize, minuteHandSize, secondHandSize;
+
+
+// ============ MAIN FUNCTION ============
 int main(int argc, char** argv)
 {
     glutInit(&argc, argv);
@@ -65,14 +72,15 @@ int main(int argc, char** argv)
     {
         initBezelVBO();
         initBodyVBO();
+        initHandsVBO();
         glutTimerFunc(1000, UpdateClock, 0);
         glutMainLoop();
     }
 
     DeleteVBO();
-
     return 0;
 };
+
 
 // Drawers
 
@@ -657,18 +665,61 @@ void DeleteVBO()
     glDeleteBuffers(1, &RectangleBodyVBO);
     glDeleteBuffers(1, &triangleBodyVBO);
     //HANDS
+    glDeleteBuffers(1, &hourHandVBO);
+    glDeleteBuffers(1, &minuteHandVBO);
+    glDeleteBuffers(1, &secondHandVBO);
+}
 
+// Clock Hands
+
+void initHandsVBO()
+{
+    // Hour hand (shorter, thicker)
+    GLfloat hourHandVerts[] = {
+        0.0f, 0.0f,
+        0.0f, 0.3f
+    };
+    glGenBuffers(1, &hourHandVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, hourHandVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(hourHandVerts), hourHandVerts, GL_STATIC_DRAW);
+    hourHandSize = 2;
+
+    // Minute hand (medium)
+    GLfloat minuteHandVerts[] = {
+        0.0f, 0.0f,
+        0.0f, 0.45f
+    };
+    glGenBuffers(1, &minuteHandVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, minuteHandVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(minuteHandVerts), minuteHandVerts, GL_STATIC_DRAW);
+    minuteHandSize = 2;
+
+    // Second hand (longer, thin)
+    GLfloat secondHandVerts[] = {
+        0.0f, 0.0f,
+        0.0f, 0.55f
+    };
+    glGenBuffers(1, &secondHandVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, secondHandVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(secondHandVerts), secondHandVerts, GL_STATIC_DRAW);
+    secondHandSize = 2;
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 
 void ClockHands() {
     glPushMatrix();
-    glRotatef(ROTATE_DEGREES, 0, 0, 1);
 
+    // If you don't want a global flip, set ROTATE_DEGREES = 0
+    if (ROTATE_DEGREES != 0) {
+        glRotatef(ROTATE_DEGREES, 0, 0, 1);
+    }
+
+    // get current time
     time_t rawtime;
     struct tm timeinfo;
     time(&rawtime);
-
 #if defined(_MSC_VER)
     localtime_s(&timeinfo, &rawtime);
 #else
@@ -679,36 +730,54 @@ void ClockHands() {
     int minutes = timeinfo.tm_min;
     int seconds = timeinfo.tm_sec;
 
-    // Hour hand
-    double hourAngle = -(90.0 + hours * 360.0 / 12.0) + (360.0 / 12.0) * minutes / 60.0;
+    // compute fractional positions (smooth hour & minute)
+    double sec_frac = seconds / 60.0;                       // 0..1
+    double min_frac = (minutes + sec_frac) / 60.0;          // 0..1
+    double hour_frac = (hours + min_frac) / 12.0;           // 0..1
+
+    double hour_deg = hour_frac * 360.0; // 0 at 12, increasing clockwise
+    double minute_deg = min_frac * 360.0;
+    double second_deg = sec_frac * 360.0;
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, 0); // we'll bind each VBO as needed
+
+    // --- Hour hand (drawn from center up; rotate clockwise by hour_deg) ---
+    glPushMatrix();
+    glRotatef((float)-hour_deg, 0.0f, 0.0f, 1.0f);  // negative = clockwise
     glLineWidth(5.0f);
-    glBegin(GL_LINES);
     glColor3f(1.0f, 0.0f, 0.0f);
-    glVertex2d(0.0, 0.0);
-    glVertex2d(0.5 * cos(hourAngle * M_PI / 180.0), 0.5 * sin(hourAngle * M_PI / 180.0));
-    glEnd();
+    glBindBuffer(GL_ARRAY_BUFFER, hourHandVBO);
+    glVertexPointer(2, GL_FLOAT, 0, (void*)0);
+    glDrawArrays(GL_LINES, 0, (GLsizei)hourHandSize);
+    glPopMatrix();
 
-    // Minute hand
-    double minuteAngle = -(90.0 + minutes * 360.0 / 60.0);
+    // --- Minute hand ---
+    glPushMatrix();
+    glRotatef((float)-minute_deg, 0.0f, 0.0f, 1.0f);
     glLineWidth(3.0f);
-    glBegin(GL_LINES);
     glColor3f(0.0f, 1.0f, 0.0f);
-    glVertex2d(0.0, 0.0);
-    glVertex2d(0.7 * cos(minuteAngle * M_PI / 180.0), 0.7 * sin(minuteAngle * M_PI / 180.0));
-    glEnd();
+    glBindBuffer(GL_ARRAY_BUFFER, minuteHandVBO);
+    glVertexPointer(2, GL_FLOAT, 0, (void*)0);
+    glDrawArrays(GL_LINES, 0, (GLsizei)minuteHandSize);
+    glPopMatrix();
 
-    // Second hand
-    double secondAngle = -(90.0 + seconds * 360.0 / 60.0);
-    glLineWidth(1.0f);
-    glBegin(GL_LINES);
+    // --- Second hand ---
+    glPushMatrix();
+    glRotatef((float)-second_deg, 0.0f, 0.0f, 1.0f);
+    glLineWidth(1.5f);
     glColor3f(0.0f, 0.0f, 1.0f);
-    glVertex2d(0.0, 0.0);
-    glVertex2d(0.9 * cos(secondAngle * M_PI / 180.0), 0.9 * sin(secondAngle * M_PI / 180.0));
-    glEnd();
+    glBindBuffer(GL_ARRAY_BUFFER, secondHandVBO);
+    glVertexPointer(2, GL_FLOAT, 0, (void*)0);
+    glDrawArrays(GL_LINES, 0, (GLsizei)secondHandSize);
+    glPopMatrix();
+
+    // cleanup
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glDisableClientState(GL_VERTEX_ARRAY);
 
     glPopMatrix();
 }
-
 
 void UpdateClock(int) {
     glutPostRedisplay();          // ask GLUT to redraw the screen
