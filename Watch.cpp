@@ -9,7 +9,7 @@ void Draw();
 void Bezel();
 void BezelMarkers();
 void Body();
-void Logo();
+void BodyMarkers();
 
 //For VBO
 void initBezelVBO();
@@ -30,12 +30,13 @@ void keyboardMonitor(unsigned char key, int x, int y);
 float bezelRotation = 0.0f;
 float scale = 1.0f;
 bool rotating = false; 
+int numSegments = 100;
 
 GLuint innerBezelVBO, outerBezelVBO, ringBezelVBO, triangleBezelVBO, lineBezelVBO, dotBezelVBO;          //VBO's for Bezel
 size_t outerBezelSize, ringBezelSize, innerBezelSize, triangleBezelSize, lineBezelSize, dotBezelSize;          //Vertices Amount
 
-GLuint backgroundBodyVBO, logoBodyVBO;
-size_t backgroundBodySize;
+GLuint backgroundBodyVBO, logoBodyVBO, lineBodyVBO, circleBodyVBO, RectangleBodyVBO, triangleBodyVBO;
+size_t backgroundBodySize, circleBodySize;
 int main(int argc, char** argv)
 {
     glutInit(&argc, argv);
@@ -82,8 +83,6 @@ void initBezelVBO()
     vector<GLfloat> innerBezelVertices;
     vector<GLfloat> outerBezelVertices;
     vector<GLfloat> ringBezelVertices;
-
-    int numSegments = 50;
 
     //Init Outer
     GenerateCirlceVertices(0, 0, 0.75f, numSegments, outerBezelVertices);
@@ -164,7 +163,7 @@ void Bezel()
     // Ring
     glBindBuffer(GL_ARRAY_BUFFER, ringBezelVBO);
     glVertexPointer(2, GL_FLOAT, 0, 0); 
-    glColor3f(40.0f / 255.0f, 40.0f / 255.0f, 43.0f / 255.0f);
+    glColor3f(30.0f / 255.0f, 30.0f / 255.0f, 33.0f / 255.0f);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, ringBezelSize); 
 
     glColor3f(216.0f / 255.0f, 216.0f / 255.0f, 216.0f / 255.0f);
@@ -296,7 +295,6 @@ void BezelMarkers()
 void initBodyVBO()
 {
     vector<GLfloat> backgroundBodyVertices;
-    int numSegments = 50;
 
     //Background
     CircleGen(0, 0, 0.649, 10, numSegments, backgroundBodyVertices);
@@ -327,6 +325,52 @@ void initBodyVBO()
     glGenBuffers(1, &logoBodyVBO);
     glBindBuffer(GL_ARRAY_BUFFER, logoBodyVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(LogoBodyArray), LogoBodyArray, GL_STATIC_DRAW);
+
+    // Line Bars
+    GLfloat lineBodyArray[] =
+    {
+        0.0f, 0.64f, // Top
+        0.0f, 0.61f,  // Bot
+    };
+    glGenBuffers(1, &lineBodyVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, lineBodyVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(lineBodyArray), lineBodyArray, GL_STATIC_DRAW);
+
+    // Circles
+    vector<GLfloat> circleBodyVertices;
+
+    CircleGen(0, 0.55, 0.03, 10, numSegments, circleBodyVertices);
+    glGenBuffers(1, &circleBodyVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, circleBodyVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * circleBodyVertices.size(), circleBodyVertices.data(), GL_STATIC_DRAW);
+    circleBodySize = circleBodyVertices.size() / 2;
+
+    // Triangle
+    GLfloat triangleBodyArray[] =
+    {
+        0.09f, 0.57f,
+        -0.09f, 0.57f,
+        0.0f, 0.45f,
+        0.0f, 0.4f,
+        0.0f, 0.45f
+    };
+
+    glGenBuffers(1, &triangleBodyVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, triangleBodyVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(triangleBodyArray), triangleBodyArray, GL_STATIC_DRAW);
+
+    //Rectangle
+    GLfloat RectangleArray[] = 
+    {
+        0.55, 0.035,
+        0.55, -0.035,
+        0.33, -0.035,
+        0.33, 0.035
+    };
+
+    glGenBuffers(1, &RectangleBodyVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, RectangleBodyVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(RectangleArray), RectangleArray, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
@@ -380,7 +424,102 @@ void Body()
         
     glPopMatrix();
 
+    BodyMarkers();
+
     glDisableClientState(GL_VERTEX_ARRAY);
+}
+
+void BodyMarkers()
+{    
+    //Lines
+    glBindBuffer(GL_ARRAY_BUFFER, lineBodyVBO);
+    glVertexPointer(2, GL_FLOAT, 0, 0);
+
+    for (float angle = 0.0f; angle < 360.0f; angle += 6.0f)
+    {       
+        if (fmod(angle, 30) == 0)
+            glLineWidth(6);
+        else
+            glLineWidth(2);
+
+        glPushMatrix();
+        glRotatef(angle, 0.0f, 0.0f, -1.0f);
+        glDrawArrays(GL_LINES, 0, 2);
+        glPopMatrix();
+    }
+    //Triangle
+    glBindBuffer(GL_ARRAY_BUFFER, triangleBodyVBO);
+    glVertexPointer(2, GL_FLOAT, 0, 0);
+    glColor3f(250.0f/255.0f, 245.0f/255.0f, 239.0f/255.0f);
+    glDrawArrays(GL_POLYGON, 0, 3);
+
+    //Triangle Outline
+    glLineWidth(3.0f);
+    glColor3f(158.0f / 255.0f, 168.0f/255.0f, 174.0f/255.0f);
+    glDrawArrays(GL_LINE_LOOP, 0, 5);
+    //Circles
+    for (float angle = 30.0f; angle < 360.0f; angle += 30.0f)
+    {   
+        glPushMatrix();
+        glRotatef(angle, 0.0f, 0.0f, -1.0f);
+        if (angle == 90)
+        {
+            glPopMatrix();
+            continue;
+        }
+        else if( angle == 180 || angle == 270)
+        {
+            glPushMatrix();
+            
+            glTranslatef(0.0f, 0.55f + 0.025f, 0.0f);
+            glScalef(1.0f, 1.8f, 1.0f);
+            glTranslatef(0.0f, -(0.55f + 0.025f), 0.0f);
+
+            glColor3f(250.0f/255.0f, 245.0f/255.0f, 239.0f/255.0f);
+            glDrawArrays(GL_POLYGON, 0, circleBodySize);
+
+            glLineWidth(3.0f);
+            glColor3f(158.0f/255.0f, 168.0f/255.0f, 174.0f/255.0f);
+            glDrawArrays(GL_LINE_LOOP, 0, circleBodySize);
+
+            glLineWidth(3.0f);
+            glColor3f(158.0f/255.0f, 168.0f/255.0f, 174.0f/255.0f);
+            glBegin(GL_LINES);
+            glVertex2f(0.0f, (0.55f + 0.025f) - 0.055); 
+            glVertex2f(0.0f, (0.55f + 0.025f) - (0.045f * 2));
+            glEnd();
+
+            glPopMatrix();
+        }
+        else
+        {   
+            glBindBuffer(GL_ARRAY_BUFFER, circleBodyVBO);
+            glVertexPointer(2, GL_FLOAT, 0, 0);
+            glColor3f(250.0f/255.0f, 245.0f/255.0f, 239.0f/255.0f);
+            glDrawArrays(GL_POLYGON, 0, circleBodySize);
+
+            //OUTLINE
+            glLineWidth(3.0f);
+            glColor3f(158.0f / 255.0f, 168.0f/255.0f, 174.0f/255.0f);
+            glDrawArrays(GL_LINE_LOOP, 0, circleBodySize);
+        }
+        glPopMatrix();
+    }    
+
+    // DATE / GROUP NUMBER
+    glBindBuffer(GL_ARRAY_BUFFER, RectangleBodyVBO);
+    glVertexPointer(2, GL_FLOAT, 0, 0);
+    glColor3f(250.0f/255.0f, 245.0f/255.0f, 239.0f/255.0f);
+    glDrawArrays(GL_POLYGON, 0, 4);
+    
+    glLineWidth(2.0f);
+    glColor3f(158.0f / 255.0f, 168.0f/255.0f, 174.0f/255.0f);
+    glDrawArrays(GL_LINE_LOOP, 0, 4);
+
+    const unsigned char mode[100] = {"GROUP 2"};
+    glColor3f(40.0f / 255.0f, 40.0f / 255.0f, 43.0f / 255.0f);
+    glRasterPos2f(0.335, -0.020f);
+    glutBitmapString(GLUT_BITMAP_HELVETICA_18, mode);
 }
 
 // Shape Generators
@@ -495,12 +634,20 @@ void keyboardMonitor(unsigned char key, int x, int y)
 
 void DeleteVBO()
 {
+    //BEZEL
     glDeleteBuffers(1, &innerBezelVBO);
     glDeleteBuffers(1, &outerBezelVBO);
     glDeleteBuffers(1, &ringBezelVBO);
     glDeleteBuffers(1, &triangleBezelVBO);
     glDeleteBuffers(1, &lineBezelVBO);
-    
+    glDeleteBuffers(1, &dotBezelVBO);
+    //BODY
     glDeleteBuffers(1, &backgroundBodyVBO);
     glDeleteBuffers(1, &logoBodyVBO);
+    glDeleteBuffers(1, &lineBodyVBO);
+    glDeleteBuffers(1, &circleBodyVBO);
+    glDeleteBuffers(1, &RectangleBodyVBO);
+    glDeleteBuffers(1, &triangleBodyVBO);
+    //HANDS
+
 }
