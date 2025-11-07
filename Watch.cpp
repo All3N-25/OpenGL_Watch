@@ -1,6 +1,6 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
-#define _USE_MATH_DEFINES //for Visual Studio to work with M_PI
+#define _USE_MATH_DEFINES 
 #include <cmath>
 #include <vector>
 #include <time.h>
@@ -24,9 +24,9 @@ void initHandsVBO();
 void DeleteVBO();
 
 //Generators
-void CircleGen(float centerX, float centerY, float radius, int width, int numSegments, std::vector<GLfloat>& vertices);
-void GenerateCirlceVertices(float centerX, float centerY, float radius, int numSegments, std::vector<GLfloat>& vertices);
-void GenerateRingVertices(float centerX, float centerY, float innerRadius, float outerRadius, int numSegments, std::vector<GLfloat>& vertices);
+void CircleGen(float centerX, float centerY, float radius, int width, int numSegments, vector<GLfloat>& vertices);
+void GenerateCirlceVertices(float centerX, float centerY, float radius, int numSegments, vector<GLfloat>& vertices);
+void GenerateRingVertices(float centerX, float centerY, float innerRadius, float outerRadius, int numSegments, vector<GLfloat>& vertices);
 
 //Controls
 void MouseClick(int button, int state, int x, int y);
@@ -40,15 +40,20 @@ bool rotating = false;
 int numSegments = 100;
 const int ROTATE_DEGREES = 0;
 
-GLuint innerBezelVBO, outerBezelVBO, ringBezelVBO, triangleBezelVBO, lineBezelVBO, dotBezelVBO;          //VBO's for Bezel
-size_t outerBezelSize, ringBezelSize, innerBezelSize, triangleBezelSize, lineBezelSize, dotBezelSize;          //Vertices Amount
+GLuint innerBezelVBO, outerBezelVBO, ringBezelVBO, triangleBezelVBO, lineBezelVBO, dotBezelVBO;
+size_t outerBezelSize, ringBezelSize, innerBezelSize, triangleBezelSize, lineBezelSize, dotBezelSize;
 
 GLuint backgroundBodyVBO, logoBodyVBO, lineBodyVBO, circleBodyVBO, RectangleBodyVBO, triangleBodyVBO;
 size_t backgroundBodySize, circleBodySize;
 
-GLuint hourHandVBO, minuteHandVBO, secondHandVBO;
-size_t hourHandSize, minuteHandSize, secondHandSize;
+GLuint hourHandVBO, minuteHandVBO, secondHandVBO, hubVBO, redCircleVBO;
+size_t hourHandSize, minuteHandSize, secondHandSize, hubVertexCount, redCircleVertexCount;
 
+
+// Circle vertex counts
+int hourHandCircleSize = 0;
+int minuteHandCircleSize = 0;
+int secondHandCircleSize = 0;
 
 // ============ MAIN FUNCTION ============
 int main(int argc, char** argv)
@@ -231,8 +236,8 @@ void BezelMarkers()
         {
             glPushMatrix();
 
-            glTranslatef(-0.03f, 0.67f, 0.0f); // Adjust position (x, y)
-            glScalef(0.0005f, 0.0005f, 1.0f);  // Adjust scale
+            glTranslatef(-0.03f, 0.67f, 0.0f);
+            glScalef(0.0005f, 0.0005f, 1.0f);
             glLineWidth(2.0f);
 
             const unsigned char str10[] = "10";
@@ -245,8 +250,8 @@ void BezelMarkers()
         {
             glPushMatrix();
 
-            glTranslatef(-0.03f, 0.67f, 0.0f); // Adjust position (x, y)
-            glScalef(0.0005f, 0.0005f, 1.0f);  // Adjust scale
+            glTranslatef(-0.03f, 0.67f, 0.0f);
+            glScalef(0.0005f, 0.0005f, 1.0f);
             glLineWidth(2.0f);
 
             const unsigned char str10[] = "20";
@@ -259,8 +264,8 @@ void BezelMarkers()
         {
             glPushMatrix();
 
-            glTranslatef(-0.03f, 0.67f, 0.0f); // Adjust position (x, y)
-            glScalef(0.0005f, 0.0005f, 1.0f);  // Adjust scale
+            glTranslatef(-0.03f, 0.67f, 0.0f);
+            glScalef(0.0005f, 0.0005f, 1.0f);
             glLineWidth(2.0f);
 
             const unsigned char str10[] = "30";
@@ -273,8 +278,8 @@ void BezelMarkers()
         {
             glPushMatrix();
 
-            glTranslatef(-0.03f, 0.67f, 0.0f); // Adjust position (x, y)
-            glScalef(0.0005f, 0.0005f, 1.0f);  // Adjust scale
+            glTranslatef(-0.03f, 0.67f, 0.0f);
+            glScalef(0.0005f, 0.0005f, 1.0f);
             glLineWidth(2.0f);
 
             const unsigned char str10[] = "40";
@@ -287,8 +292,8 @@ void BezelMarkers()
         {
             glPushMatrix();
 
-            glTranslatef(-0.03f, 0.67f, 0.0f); // Adjust position (x, y)
-            glScalef(0.0005f, 0.0005f, 1.0f);  // Adjust scale
+            glTranslatef(-0.03f, 0.67f, 0.0f);
+            glScalef(0.0005f, 0.0005f, 1.0f);
             glLineWidth(2.0f);
 
             const unsigned char str10[] = "50";
@@ -424,7 +429,6 @@ void Body()
     // Scale
     glScalef(scale, scale, 1.0f);
 
-    // Move back to original position
     glTranslatef(0.0f, -0.18f, 0.0f);
 
     //Container
@@ -540,7 +544,7 @@ void BodyMarkers()
 
 // Shape Generators
 
-void GenerateCirlceVertices(float centerX, float centerY, float radius, int numSegments, std::vector<GLfloat>& vertices)
+void GenerateCirlceVertices(float centerX, float centerY, float radius, int numSegments, vector<GLfloat>& vertices)
 {
     for (int i = 0; i < numSegments; ++i)
     {
@@ -549,7 +553,7 @@ void GenerateCirlceVertices(float centerX, float centerY, float radius, int numS
         vertices.push_back(centerY + radius * sin(angle)); // Y coordinate
     }
 }
-void GenerateRingVertices(float centerX, float centerY, float innerRadius, float outerRadius, int numSegments, std::vector<GLfloat>& vertices)
+void GenerateRingVertices(float centerX, float centerY, float innerRadius, float outerRadius, int numSegments, vector<GLfloat>& vertices)
 {
     for (int i = 0; i <= numSegments; ++i) {
         float angle = 2.0f * M_PI * i / numSegments;
@@ -569,7 +573,7 @@ void GenerateRingVertices(float centerX, float centerY, float innerRadius, float
     }
 }
 
-void CircleGen(float centerX, float centerY, float radius, int width, int numSegments, std::vector<GLfloat>& vertices)
+void CircleGen(float centerX, float centerY, float radius, int width, int numSegments, vector<GLfloat>& vertices)
 {
     for (int i = 0; i < numSegments; ++i)
     {
@@ -670,115 +674,187 @@ void DeleteVBO()
     glDeleteBuffers(1, &secondHandVBO);
 }
 
-// Clock Hands
-
-void initHandsVBO() //Edit Glfloat for different hand shapes
+void initHandsVBO()
 {
-    // Hour hand 
-    GLfloat hourHandVerts[] = {
-        0.0f, 0.0f,
-        0.0f, 0.3f
+    // ----- HOUR HAND (Seiko-style broad with oval lume) -----
+    vector<GLfloat> hourHandVerts = {
+        -0.015f, -0.07f,
+         0.015f,  -0.07f,
+         0.020f, 0.05f,
+         0.040f, 0.30f,
+         0.0f,   0.34f,
+        -0.040f, 0.30f,
+        -0.020f, 0.05f
     };
+
     glGenBuffers(1, &hourHandVBO);
     glBindBuffer(GL_ARRAY_BUFFER, hourHandVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(hourHandVerts), hourHandVerts, GL_STATIC_DRAW);
-	hourHandSize = 2; // edit if vertices increased
+    glBufferData(GL_ARRAY_BUFFER, hourHandVerts.size() * sizeof(GLfloat), hourHandVerts.data(), GL_STATIC_DRAW);
+    hourHandSize = 7;
 
-    // Minute hand
-    GLfloat minuteHandVerts[] = {
-        0.0f, 0.0f,
-        0.0f, 0.45f
+
+    // ----- MINUTE HAND (Seiko-style arrow tip with lume) -----
+    vector<GLfloat> minuteHandVerts = {
+        // Base section (slim rectangular shaft)
+        -0.015f, -0.07f,
+         0.015f,  -0.07f,
+         0.025f,  0.35f,
+		 0.025f,  0.45f, // left side of arrow tip
+         0.0f,   0.50f, // tip
+		-0.025f,  0.45f, // right side of arrow tip
+        -0.025f,  0.35f
     };
+
     glGenBuffers(1, &minuteHandVBO);
     glBindBuffer(GL_ARRAY_BUFFER, minuteHandVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(minuteHandVerts), minuteHandVerts, GL_STATIC_DRAW);
-    minuteHandSize = 2; // edit if vertices increased
+    glBufferData(GL_ARRAY_BUFFER, minuteHandVerts.size() * sizeof(GLfloat), minuteHandVerts.data(), GL_STATIC_DRAW);
+    minuteHandSize = 7;
 
-    // Second hand
-    GLfloat secondHandVerts[] = {
-        0.0f, 0.0f,
-        0.0f, 0.55f
+    // ----- SECOND HAND -----
+    vector<GLfloat> secondHandVerts = {
+        0.0f, -0.05f,
+        0.0f, 0.58f,
+        -0.007f, -0.05f,
+         0.007f, -0.05f,
+         0.007f, -0.20f,
+        -0.007f, -0.20f
     };
+
+    vector<GLfloat> secondCircle;
+    GenerateCirlceVertices(0.0f, -0.10f, 0.015f, 30, secondCircle);
+    secondHandVerts.insert(secondHandVerts.end(), secondCircle.begin(), secondCircle.end());
+
     glGenBuffers(1, &secondHandVBO);
     glBindBuffer(GL_ARRAY_BUFFER, secondHandVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(secondHandVerts), secondHandVerts, GL_STATIC_DRAW);
-    secondHandSize = 2; // edit if vertices increased
+    glBufferData(GL_ARRAY_BUFFER, secondHandVerts.size() * sizeof(GLfloat), secondHandVerts.data(), GL_STATIC_DRAW);
+    secondHandSize = 6;
+    secondHandCircleSize = secondCircle.size() / 2;
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
+    // ----- RED CIRCLE (base of second hand) -----
+    vector<GLfloat> redCircleVerts;
+    const int redCircleSegments = 50;
+    const float redCircleRadius = 0.020f; 
 
+    redCircleVerts.push_back(0.0f);
+    redCircleVerts.push_back(0.0f);
 
-void ClockHands() {
-    glPushMatrix();
-
-    if (ROTATE_DEGREES != 0) {
-        glRotatef(ROTATE_DEGREES, 0, 0, 1);
+    for (int i = 0; i <= redCircleSegments; ++i) {
+        float angle = 2.0f * M_PI * i / redCircleSegments;
+        redCircleVerts.push_back(redCircleRadius * cos(angle));
+        redCircleVerts.push_back(redCircleRadius * sin(angle));
     }
 
-    // get current time
-    time_t rawtime;
-    struct tm timeinfo;
-    time(&rawtime);
-#if defined(_MSC_VER)
-    localtime_s(&timeinfo, &rawtime);
-#else
-    localtime_r(&rawtime, &timeinfo);
-#endif
+    glGenBuffers(1, &redCircleVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, redCircleVBO);
+    glBufferData(GL_ARRAY_BUFFER,
+        redCircleVerts.size() * sizeof(GLfloat),
+        redCircleVerts.data(), GL_STATIC_DRAW);
+    redCircleVertexCount = static_cast<GLsizei>(redCircleVerts.size() / 2);
 
-    int hours = timeinfo.tm_hour % 12;
-    int minutes = timeinfo.tm_min;
-    int seconds = timeinfo.tm_sec;
+    // ----- CENTER HUB (smaller metallic pin) -----
+    vector<GLfloat> hubVerts;
+    const int hubSegments = 50;
+    const float hubRadius = 0.012f;
 
-    // compute fractional positions (smooth hour & minute)
-    double sec_frac = seconds / 60.0;
-    double min_frac = (minutes + sec_frac) / 60.0;
-    double hour_frac = (hours + min_frac) / 12.0;
+    hubVerts.push_back(0.0f);
+    hubVerts.push_back(0.0f);
 
-    double hour_deg = hour_frac * 360.0;
-    double minute_deg = min_frac * 360.0;
-    double second_deg = sec_frac * 360.0;
+    for (int i = 0; i <= hubSegments; ++i) {
+        float angle = 2.0f * M_PI * i / hubSegments;
+        hubVerts.push_back(hubRadius * cos(angle));
+        hubVerts.push_back(hubRadius * sin(angle));
+    }
 
-    glEnableClientState(GL_VERTEX_ARRAY);
+    glGenBuffers(1, &hubVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, hubVBO);
+    glBufferData(GL_ARRAY_BUFFER,
+        hubVerts.size() * sizeof(GLfloat),
+        hubVerts.data(), GL_STATIC_DRAW);
+    hubVertexCount = static_cast<GLsizei>(hubVerts.size() / 2);
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // Hour hand
-    glPushMatrix();
-    glRotatef((float)-hour_deg, 0.0f, 0.0f, 1.0f);
-    glLineWidth(5.0f);
-    glColor3f(1.0f, 0.0f, 0.0f);
-    glBindBuffer(GL_ARRAY_BUFFER, hourHandVBO);
-    glVertexPointer(2, GL_FLOAT, 0, (void*)0);
-	glDrawArrays(GL_LINES, 0, (GLsizei)hourHandSize); //Edit GL_LINES if needed
-    glPopMatrix();
-
-    // Minute hand
-    glPushMatrix();
-    glRotatef((float)-minute_deg, 0.0f, 0.0f, 1.0f);
-    glLineWidth(3.0f);
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glBindBuffer(GL_ARRAY_BUFFER, minuteHandVBO);
-    glVertexPointer(2, GL_FLOAT, 0, (void*)0);
-    glDrawArrays(GL_LINES, 0, (GLsizei)minuteHandSize); //Edit GL_LINES if needed
-    glPopMatrix();
-
-    // Second hand
-    glPushMatrix();
-    glRotatef((float)-second_deg, 0.0f, 0.0f, 1.0f);
-    glLineWidth(1.5f);
-    glColor3f(0.0f, 0.0f, 1.0f);
-    glBindBuffer(GL_ARRAY_BUFFER, secondHandVBO);
-    glVertexPointer(2, GL_FLOAT, 0, (void*)0);
-    glDrawArrays(GL_LINES, 0, (GLsizei)secondHandSize); //Edit GL_LINES if needed
-    glPopMatrix();
-
-    // cleanup
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glDisableClientState(GL_VERTEX_ARRAY);
-
-    glPopMatrix();
 }
 
-void UpdateClock(int) {
-    glutPostRedisplay();          // ask GLUT to redraw the screen
-    glutTimerFunc(1000, UpdateClock, 0); // call again in 1000 ms (1 second)
+
+
+void ClockHands()
+{
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    time_t now = time(0);
+    struct tm localTime;
+    localtime_s(&localTime, &now);
+
+    int hours = localTime.tm_hour % 12;
+    int minutes = localTime.tm_min;
+    int seconds = localTime.tm_sec;
+
+    float hourAngle = (hours + minutes / 60.0f) * 30.0f;
+    float minuteAngle = (minutes + seconds / 60.0f) * 6.0f;
+    float secondAngle = seconds * 6.0f;
+
+    GLfloat lumeColor[] = { 227.0f / 255.0f, 250.0f / 255.0f, 211.0f / 255.0f };
+    GLfloat metallicColor[] = { 158.0f / 255.0f, 168.0f / 255.0f, 174.0f / 255.0f };
+    GLfloat secondHandColor[] = { 200.0f / 255.0f, 20.0f / 255.0f, 20.0f / 255.0f };
+    GLfloat centerPinColor[] = { 70.0f / 255.0f, 70.0f / 255.0f, 70.0f / 255.0f };
+
+    // ----- HOUR HAND -----
+    glPushMatrix();
+    glRotatef(-hourAngle, 0.0f, 0.0f, 1.0f);
+    glBindBuffer(GL_ARRAY_BUFFER, hourHandVBO);
+    glVertexPointer(2, GL_FLOAT, 0, 0);
+    glColor3fv(lumeColor);
+    glDrawArrays(GL_POLYGON, 0, hourHandSize);
+    glColor3fv(metallicColor);
+    glDrawArrays(GL_LINE_LOOP, 0, hourHandSize);
+    glColor3fv(lumeColor);
+    glDrawArrays(GL_POLYGON, hourHandSize, hourHandCircleSize);
+    glPopMatrix();
+
+    // ----- MINUTE HAND -----
+    glPushMatrix();
+    glRotatef(-minuteAngle, 0.0f, 0.0f, 1.0f);
+    glBindBuffer(GL_ARRAY_BUFFER, minuteHandVBO);
+    glVertexPointer(2, GL_FLOAT, 0, 0);
+    glColor3fv(lumeColor);
+    glDrawArrays(GL_POLYGON, 0, minuteHandSize);
+    glColor3fv(metallicColor);
+    glDrawArrays(GL_LINE_LOOP, 0, minuteHandSize);
+    glColor3fv(lumeColor);
+    glDrawArrays(GL_POLYGON, minuteHandSize, minuteHandCircleSize);
+    glPopMatrix();
+
+    // ----- SECOND HAND -----
+    glPushMatrix();
+    glRotatef(-secondAngle, 0.0f, 0.0f, 1.0f);
+    glBindBuffer(GL_ARRAY_BUFFER, secondHandVBO);
+    glVertexPointer(2, GL_FLOAT, 0, 0);
+    glColor3fv(secondHandColor);
+    glDrawArrays(GL_LINES, 0, 2);
+    glDrawArrays(GL_POLYGON, 2, 4);
+    glColor3fv(lumeColor);
+    glDrawArrays(GL_POLYGON, secondHandSize, secondHandCircleSize);
+    glPopMatrix();
+
+    // ----- RED BASE CIRCLE (under second hand) -----
+    glColor3f(0.85f, 0.0f, 0.0f);
+    glBindBuffer(GL_ARRAY_BUFFER, redCircleVBO);
+    glVertexPointer(2, GL_FLOAT, 0, 0);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, redCircleVertexCount);
+
+    // ----- CENTER HUB (on top) -----
+    glColor3fv(centerPinColor);
+    glBindBuffer(GL_ARRAY_BUFFER, hubVBO);
+    glVertexPointer(2, GL_FLOAT, 0, 0);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, hubVertexCount);
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+
+void UpdateClock(int value)
+{
+    glutPostRedisplay();
+    glutTimerFunc(1000, UpdateClock, 0);
 }
