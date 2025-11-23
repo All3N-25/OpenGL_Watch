@@ -104,7 +104,7 @@ int main(int argc, char** argv)
 	glutInitWindowSize(800, 800);
 	glutCreateWindow("Watch");
 
-	glutFullScreen();
+	// glutFullScreen();					 // Iuncomment ung nasa body para mas malinaw text
 	glClearColor(0.15f, 0.15f, 0.15f, 1.0f); // Dark grey background
 
 	glutDisplayFunc(Draw);
@@ -813,18 +813,18 @@ void Body()
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	DrawText();
+	//DrawText();
 
 	// D pwede sa fullscreen
-	// const unsigned char brand[100] = { "SEIKO" }; 
-	// glColor3fv(silverColor); 
-	// glRasterPos2f(-0.085f, 0.25f); 
-	// glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, brand);
+	const unsigned char brand[100] = { "SEIKO" }; 
+	glColor3fv(silverColor); 
+	glRasterPos2f(-0.085f, 0.25f); 
+	glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, brand);
 
-	// const unsigned char mode[100] = { "AUTOMATIC" }; 
-	// glColor3fv(silverColor); 
-	// glRasterPos2f(-0.095f, -0.25f); 
-	// glutBitmapString(GLUT_BITMAP_HELVETICA_12, mode);
+	const unsigned char mode[100] = { "AUTOMATIC" }; 
+	glColor3fv(silverColor); 
+	glRasterPos2f(-0.095f, -0.25f); 
+	glutBitmapString(GLUT_BITMAP_HELVETICA_12, mode);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glPushMatrix();
@@ -912,13 +912,13 @@ void BodyMarkers()
 	glColor3fv(silverMetalColor);
 	glDrawArrays(GL_LINE_LOOP, 0, 4);
 
-	DrawText2();
+	//DrawText2();
 
 	// Hindi pwede sa fullscreen
-	// const unsigned char g_mode[100] = { "GROUP 2" };
-	// glColor3fv(darkGrayColor);
-	// glRasterPos2f(0.335f, -0.020f);
-	// glutBitmapString(GLUT_BITMAP_HELVETICA_18, g_mode);
+	const unsigned char g_mode[100] = { "GROUP 2" };
+	glColor3fv(darkGrayColor);
+	glRasterPos2f(0.335f, -0.020f);
+	glutBitmapString(GLUT_BITMAP_HELVETICA_18, g_mode);
 }
 
 void DrawText2() 
